@@ -1,0 +1,6 @@
+@Bursary.Ussd.Microservice_HostAddress = http://localhost:5280
+
+GET {{Bursary.Ussd.Microservice_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
