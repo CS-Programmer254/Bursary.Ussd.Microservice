@@ -1,4 +1,6 @@
-﻿using Application.DTOs;
+﻿using Application.Commands;
+using Application.DTOs;
+using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,66 +11,118 @@ namespace Application.Services
 {
     public class UssdService : IUssdService
     {
+        private readonly IMediator _mediator;
+        public UssdService(IMediator mediator)
+        {
+            _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        }
         public async Task<string> HandleUssdRequestAsync(UssdRequestDto request)
         {
-            var text = request.Text ?? string.Empty;
+            try
+            {
+                var text = request.Text ?? string.Empty;
 
-            var inputParts = text.Split('*');
+                var response = string.Empty;
 
-            var response = string.Empty;
+                // Check if the request is a new session or a continuation of an existing session
+                // Split the text by the '*' character to get the input parts
+                // This is a common way to handle USSD input, where each level of the menu is separated by '*'
+                var inputParts = text.Split('*');
 
-            if (string.IsNullOrEmpty(text))
-            {
+                if (string.IsNullOrEmpty(text))
+                {
+                    return "CON Welcome to Rattansi Bursary\n1. Register\n2. Login\n3. Verify Account\n0. Exit";
 
-                response = "CON Welcome to the Bursary Application\n1. Apply Bursary Now\n2. Check Existing Bursary Applications\n0. Exit";
+                }
+                else if (text == "0")
+                {
+                    response = "Thank you for using the Rattansi Bursary Application System. Goodbye!";
+
+                }
+                // Registration flow
+                if (inputParts[0] == "1")
+                {
+                    var ApplicationFlowRequest = new ApplicationFlowRequestDto
+                    {
+                        PhoneNumber = request.PhoneNumber,
+                        InputParts = inputParts
+                    };
+
+                    var RegistrationFlowResult = await _mediator.Send(
+                        new RegisterUserCommand
+                        {
+                            FlowRequestDto = ApplicationFlowRequest
+                        }
+                    );
+
+                    return RegistrationFlowResult;
+
+
+                }
+
+                // Login flow
+                if (inputParts[0] == "2")
+                {
+                    var ApplicationFlowRequest = new ApplicationFlowRequestDto
+                    {
+                        PhoneNumber = request.PhoneNumber,
+                        InputParts = inputParts
+                    };
+                     
+                    var loginFlowResult = await _mediator.Send(
+                        new LoginCommand
+                        {
+                            FlowRequestDto = ApplicationFlowRequest
+                        }
+                    );
+
+                    return loginFlowResult;
+                }
+
+                // Verification flow
+                if (inputParts[0] == "3")
+                {
+                    return await ProcessVerificationFlow(inputParts, request.PhoneNumber);
+                }
+                // Invalid option
+                return "END Invalid option. Please start again.";
 
             }
-            else if (text == "0")
+            catch (Exception ex)
             {
-                response = "Thank you for using the Rattansi Bursary Application App. Goodbye!";
-               
-            }
-            else if (text == "1")
-            {
-                response = "CON Please enter your full name:";
-            }
-            else if (inputParts.Length == 2 && inputParts[0]=="1")
-            {
-                response = $"CON Please enter your ID number:";
-            }
-            else if (inputParts.Length == 3 && inputParts[0] == "1" && inputParts[1] == "1")
-            {
-                response = $"CON Please enter your email address:";
-            }
-            else if (inputParts.Length == 4 && inputParts[0] == "1" && inputParts[1] == "1" && inputParts[2] == "1")
-            {
-                response = $"CON Please enter your phone number:";
-            }
-            else if (inputParts.Length == 5 && inputParts[0] == "1" && inputParts[1] == "1" && inputParts[2] == "1" && inputParts[3] == "1")
-            {
-                // validate applicant details
-                // prepare payload for the API
-                // call the API to save the application
-                // handle the response from the API
-                response = $"END Thank you for applying for the Bursary. Your application has been submitted.";
-
-            }else if (text == "2")
-            {
-                response = "CON Please enter your ID number to check the status of your application:";
-            }
-            else if (inputParts.Length == 2 && inputParts[0] == "2")
-            {
-                // validate ID number
-                // call the API to check the status of the application
-                // handle the response from the API
-                response = $"END Your application status is: Approved.";
-            }
-            else
-            {
-                response = " END Invalid option. Please try again!";
+                return "END System error ${ex}. Please try again later.";
+                
             }
 
-            return response;
         }
+
+       
+        private static async Task<string> ProcessVerificationFlow(string[] inputParts, string phoneNumber)
+        {
+            var currentStep = inputParts.Length;
+
+            if (currentStep == 1)
+            {
+                return "CON Enter OTP sent to your phone:";
+            }
+
+            try
+            {
+                //var verifyResult = await _authService.VerifyAccountAsync(phoneNumber, inputParts[1]);
+
+                //if (!verifyResult.Success)
+                //{
+                //    return $"END Verification failed: {verifyResult.Message}\nDial *384*3# to try again.";
+                //}
+
+                return "END Account verified successfully! You can now login.";
+            }
+            catch (Exception ex)
+            {
+  
+                return "END Verification error. Please try again.";
+            }
+        }
+
     }
 }
