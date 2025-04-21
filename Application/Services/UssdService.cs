@@ -82,7 +82,23 @@ namespace Application.Services
                 // Verification flow
                 if (inputParts[0] == "3")
                 {
-                    return await ProcessVerificationFlow(inputParts, request.PhoneNumber);
+
+                    var ApplicationFlowRequest = new ApplicationFlowRequestDto
+                    {
+                        PhoneNumber = request.PhoneNumber,
+                        InputParts = inputParts
+                    };
+
+                    var verificationFlowResult = await _mediator.Send(
+
+                        new VerifyAccountCommand
+                        {
+                            FlowRequestDto = ApplicationFlowRequest
+                        }
+                    );
+
+                    return verificationFlowResult;
+     
                 }
                 // Invalid option
                 return "END Invalid option. Please start again.";
@@ -97,32 +113,6 @@ namespace Application.Services
         }
 
        
-        private static async Task<string> ProcessVerificationFlow(string[] inputParts, string phoneNumber)
-        {
-            var currentStep = inputParts.Length;
-
-            if (currentStep == 1)
-            {
-                return "CON Enter OTP sent to your phone:";
-            }
-
-            try
-            {
-                //var verifyResult = await _authService.VerifyAccountAsync(phoneNumber, inputParts[1]);
-
-                //if (!verifyResult.Success)
-                //{
-                //    return $"END Verification failed: {verifyResult.Message}\nDial *384*3# to try again.";
-                //}
-
-                return "END Account verified successfully! You can now login.";
-            }
-            catch (Exception ex)
-            {
-  
-                return "END Verification error. Please try again.";
-            }
-        }
 
     }
 }

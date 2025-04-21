@@ -10,6 +10,7 @@ builder.Services.AddScoped<IUssdService, UssdService>();
 builder.Services.AddScoped<ILoginFlowService,LoginFlowService>();
 builder.Services.AddScoped<IRegistrationFlowService,RegistrationFlowService>();
 builder.Services.AddScoped<IVerificationFlowService,VerificationFlowService>();
+builder.Services.AddScoped<IFormatPhoneNumberService,FormatPhoneNumberService>();
 
 builder.Services.AddHttpClient<IRegistrationFlowService, RegistrationFlowService>();
 builder.Services.AddMediatR(cfg =>

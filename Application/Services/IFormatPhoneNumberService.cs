@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace Application.Services
 {
-    public interface IVerificationFlowService
+    public interface IFormatPhoneNumberService
     {
-        Task<String> VerifyAccountAsync(string phoneNumber, string[] inputParts);
+        string ? FormatPhoneNumber(string phoneNumber);
     }
 }

@@ -10,16 +10,23 @@ namespace Application.Services
     {
         private readonly HttpClient _httpClient;
 
-        public RegistrationFlowService(HttpClient httpClient)
+        private readonly IFormatPhoneNumberService _formatPhoneNumberService;
+
+        public RegistrationFlowService(HttpClient httpClient, IFormatPhoneNumberService formatPhoneNumberService)
         {
-            _httpClient = httpClient;
+            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+
+            _formatPhoneNumberService = formatPhoneNumberService ?? throw new ArgumentNullException(nameof(formatPhoneNumberService));
+
         }
 
         public async Task<string> ProcessRegistrationFlowAsync(string phoneNumber, string[] inputParts)
         {
             try
             {
+               
                 var currentStep = inputParts.Length;
+
                 Console.WriteLine($"Step: {currentStep}, InputParts: {string.Join(",", inputParts)}, Phone: {phoneNumber}");
 
                 return currentStep switch
